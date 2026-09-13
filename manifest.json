@@ -1,0 +1,9 @@
+{
+  "id": "para-organizer",
+  "name": "PARA Organizer",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "1つのノート内でタスクをPARA（Projects / Areas / Resources / Archives）の4カラムに振り分けるボードのモックアップ。",
+  "author": "",
+  "isDesktopOnly": false
+}
