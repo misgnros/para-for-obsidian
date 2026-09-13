@@ -1,37 +1,48 @@
-# PARA Board（モックアップ）
+# PARA Board (mockup)
 
-1つのノートの中でタスクリストをPARA（Projects / Areas / Resources / Archives）の4カラムに振り分ける、Kanban風ボードのモックアップである。ビルド不要のプレーンJSで動く。
+An Obsidian plugin mockup that sorts a task list into the four PARA buckets
+(Projects / Areas / Resources / Archives) as a Kanban-style board inside a note.
+Plain JS, no build step required.
 
-## 使い方
+The categorization follows the PARA method by Tiago Forte (Forte Labs):
+<https://fortelabs.com/blog/para/>.
 
-左端リボンの layers アイコン（またはコマンド「PARAを開く」）をクリックすると `PARA.md` が開く。ファイルが無ければ空のボード入りで自動作成される。以降はこの1ファイルで全タスクを管理する。
+## Usage
 
-- カードホバーで出るボタン（P/A/R/A）で別カラムへ移動、× で削除
-- カラム下の入力欄でタスク追加（Enter）
-- 完了したタスクは Archives に移せばよい
+Click the layers icon in the left ribbon (or run the "Open PARA" command) to open
+`PARA.md`. If the file doesn't exist yet, it's created with an empty board.
+From then on you manage every task in that single file.
 
-操作するとコードブロックのテキストが自動で書き戻されるので、状態はノート自身に残る。ボードを閉じてもMarkdownのタスクリストとして読める。
+- Hover a card and use the P/A/R/A buttons to move it to another column, or × to delete it
+- Add a task with the input at the bottom of each column (press Enter)
+- Mark something done by moving it to Archives
 
-### 任意のノートに埋め込む
+Every action is written back into the code block, so the state lives in the note
+itself. Close the board and it's still a plain Markdown task list.
 
-`PARA.md` 以外でも、次のコードブロックを書けばその場にボードが描画される（プロジェクト個別ノートなどに）。コマンド「PARA ボードを挿入」でも入る。
+### Embedding in any note
+
+Outside of `PARA.md`, writing the following code block renders a board in place
+(e.g. inside a project note). The "Insert PARA board" command inserts it too.
 
 ````markdown
 ```para
 [Projects]
-- v1をリリース
+- Ship v1
 [Areas]
-- 週次レビュー
+- Weekly review
 [Resources]
 [Archives]
 ```
 ````
 
-## インストール（開発版）
+## Install (dev)
 
-Vaultの `.obsidian/plugins/para-board/` に `manifest.json` `main.js` `styles.css` の3つをコピーし、設定 → コミュニティプラグインで有効化する（`para-core.js` `test_para.js` はテスト用なので不要）。
+Copy `manifest.json`, `main.js`, and `styles.css` into
+`.obsidian/plugins/para-board/` in your vault, then enable it under
+Settings → Community plugins (`para-core.js` and `test_para.js` are for tests only).
 
-## テスト
+## Test
 
 ```bash
 node test_para.js
