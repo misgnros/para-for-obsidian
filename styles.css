@@ -24,20 +24,46 @@
 .para-cards { display: flex; flex-direction: column; gap: 4px; }
 
 .para-card {
-  display: flex; align-items: center; gap: 4px;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 4px;
   padding: 4px 6px;
 }
+.para-card-header {
+  display: flex; align-items: center; gap: 4px;
+}
+.para-card-toggle {
+  cursor: pointer; font-size: 8px; width: 12px; text-align: center;
+  color: var(--text-muted); user-select: none; flex-shrink: 0;
+}
 .para-card-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .para-card-acts { display: flex; gap: 2px; opacity: 0; }
-.para-card:hover .para-card-acts { opacity: 1; }
+.para-card-header:hover .para-card-acts { opacity: 1; }
 .para-card-acts button {
   width: 18px; height: 18px; padding: 0; font-size: 10px; line-height: 1; cursor: pointer;
 }
 .para-card-acts .para-del { color: var(--text-error); }
+
+.para-card-detail {
+  margin-left: 16px; margin-top: 4px;
+}
+.para-child {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--text-muted); padding: 1px 0;
+}
+.para-child-del {
+  width: 14px; height: 14px; padding: 0; font-size: 9px; line-height: 1;
+  cursor: pointer; color: var(--text-error); opacity: 0; border: none; background: none;
+}
+.para-child:hover .para-child-del { opacity: 1; }
+
+.para-child-add {
+  width: 100%; font-size: 11px; margin-top: 2px;
+  background: transparent; border: none; border-bottom: 1px dashed var(--background-modifier-border);
+  padding: 2px 0;
+}
+.para-child-add::placeholder { color: var(--text-muted); opacity: 1; }
 
 .para-add {
   width: 100%; margin-top: 6px; font-size: 12px;

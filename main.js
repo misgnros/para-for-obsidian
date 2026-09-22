@@ -9,15 +9,21 @@ function parseBoard(text) {
   const board = {};
   for (const c of CATEGORIES) board[c] = [];
   let cur = null;
+  let last = null;
   for (const raw of String(text).split("\n")) {
-    const line = raw.trim();
-    const head = line.match(/^\[(.+?)\]$/);
-    if (head && CATEGORIES.includes(head[1])) { cur = head[1]; continue; }
-    const task = line.match(/^-\s+(.*)$/);
+    const trimmed = raw.trim();
+    const head = trimmed.match(/^\[(.+?)\]$/);
+    if (head && CATEGORIES.includes(head[1])) { cur = head[1]; last = null; continue; }
+    const child = raw.match(/^[ ]{2,}-\s+(.*)$/);
+    if (child && last) {
+      const t = child[1].replace(/^\[[ xX]?\]\s*/, "").trim();
+      if (t) last.children.push(t);
+      continue;
+    }
+    const task = trimmed.match(/^-\s+(.*)$/);
     if (task && cur) {
-      // Drop a legacy "- [ ] " / "- [x] " checkbox marker if present.
       const t = task[1].replace(/^\[[ xX]?\]\s*/, "").trim();
-      if (t) board[cur].push(t);
+      if (t) { last = { text: t, children: [] }; board[cur].push(last); }
     }
   }
   return board;
@@ -27,7 +33,10 @@ function serializeBoard(board) {
   const out = [];
   for (const c of CATEGORIES) {
     out.push(`[${c}]`);
-    for (const t of board[c]) out.push(`- ${t}`);
+    for (const t of board[c]) {
+      out.push(`- ${t.text}`);
+      for (const ch of t.children) out.push(`  - ${ch}`);
+    }
   }
   return out.join("\n");
 }
@@ -39,7 +48,6 @@ const DESC = {
   Archives: "Completed or inactive items",
 };
 
-// Rewrite the ```para block body inside the source file with the new board state.
 async function persist(app, ctx, el, board) {
   const info = ctx.getSectionInfo(el);
   const file = app.vault.getAbstractFileByPath(ctx.sourcePath);
@@ -47,8 +55,8 @@ async function persist(app, ctx, el, board) {
   const body = serializeBoard(board).split("\n");
   await app.vault.process(file, (data) => {
     const lines = data.split("\n");
-    const before = lines.slice(0, info.lineStart + 1); // keep the ```para fence
-    const after = lines.slice(info.lineEnd); // keep the closing fence onward
+    const before = lines.slice(0, info.lineStart + 1);
+    const after = lines.slice(info.lineEnd);
     return [...before, ...body, ...after].join("\n");
   });
 }
@@ -68,10 +76,12 @@ function renderBoard(app, ctx, el, board) {
     const cards = col.createDiv({ cls: "para-cards" });
     board[cat].forEach((task, i) => {
       const card = cards.createDiv({ cls: "para-card" });
+      const header = card.createDiv({ cls: "para-card-header" });
 
-      card.createSpan({ cls: "para-card-text", text: task });
+      const toggle = header.createSpan({ cls: "para-card-toggle", text: "▶" });
+      header.createSpan({ cls: "para-card-text", text: task.text });
 
-      const acts = card.createSpan({ cls: "para-card-acts" });
+      const acts = header.createSpan({ cls: "para-card-acts" });
       for (const target of CATEGORIES) {
         if (target === cat) continue;
         const btn = acts.createEl("button", { text: target[0], title: `${target} へ移動` });
@@ -79,12 +89,35 @@ function renderBoard(app, ctx, el, board) {
       }
       const del = acts.createEl("button", { text: "×", title: "削除", cls: "para-del" });
       del.onclick = () => { board[cat].splice(i, 1); commit(); };
+
+      const detail = card.createDiv({ cls: "para-card-detail" });
+      detail.style.display = "none";
+
+      for (let ci = 0; ci < task.children.length; ci++) {
+        const row = detail.createDiv({ cls: "para-child" });
+        row.createSpan({ text: task.children[ci] });
+        const cdel = row.createEl("button", { text: "×", cls: "para-child-del", title: "削除" });
+        cdel.onclick = () => { task.children.splice(ci, 1); commit(); };
+      }
+
+      const addChild = detail.createEl("input", { type: "text", cls: "para-child-add", attr: { placeholder: "+ Add detail" } });
+      addChild.onkeydown = (e) => {
+        if (e.key !== "Enter" || !addChild.value.trim()) return;
+        task.children.push(addChild.value.trim());
+        commit();
+      };
+
+      toggle.onclick = () => {
+        const open = detail.style.display !== "none";
+        detail.style.display = open ? "none" : "block";
+        toggle.textContent = open ? "▶" : "▼";
+      };
     });
 
     const add = col.createEl("input", { type: "text", cls: "para-add", attr: { placeholder: "+ Add task" } });
     add.onkeydown = (e) => {
       if (e.key !== "Enter" || !add.value.trim()) return;
-      board[cat].push(add.value.trim());
+      board[cat].push({ text: add.value.trim(), children: [] });
       commit();
     };
   }
@@ -100,7 +133,7 @@ module.exports = class ParaPlugin extends Plugin {
     });
 
     const ribbon = this.addRibbonIcon("layers", "PARAを開く", () => this.openBoard());
-    ribbon.empty(); // replace the default icon with a 2x2 "PA / RA" label
+    ribbon.empty();
     const label = ribbon.createDiv({ cls: "para-ribbon" });
     label.createDiv({ text: "PA" });
     label.createDiv({ text: "RA" });
@@ -118,12 +151,9 @@ module.exports = class ParaPlugin extends Plugin {
     });
   }
 
-  // Ensure PARA.md exists (creating it with an empty board), then open it.
   async openBoard() {
     let file = this.app.vault.getAbstractFileByPath(PARA_FILE);
     if (!file) file = await this.app.vault.create(PARA_FILE, TEMPLATE);
-    // Open in reading mode so the code block always renders as the board
-    // instead of showing raw source when the cursor lands inside it.
     await this.app.workspace.getLeaf(false).openFile(file, { state: { mode: "preview" } });
   }
 };
