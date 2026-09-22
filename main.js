@@ -102,7 +102,7 @@ function renderBoard(app, ctx, el, board) {
 
       const addChild = detail.createEl("input", { type: "text", cls: "para-child-add", attr: { placeholder: "+ Add detail" } });
       addChild.onkeydown = (e) => {
-        if (e.key !== "Enter" || !addChild.value.trim()) return;
+        if (e.key !== "Enter" || e.isComposing || !addChild.value.trim()) return;
         task.children.push(addChild.value.trim());
         commit();
       };
@@ -116,7 +116,7 @@ function renderBoard(app, ctx, el, board) {
 
     const add = col.createEl("input", { type: "text", cls: "para-add", attr: { placeholder: "+ Add task" } });
     add.onkeydown = (e) => {
-      if (e.key !== "Enter" || !add.value.trim()) return;
+      if (e.key !== "Enter" || e.isComposing || !add.value.trim()) return;
       board[cat].push({ text: add.value.trim(), children: [] });
       commit();
     };
