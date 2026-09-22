@@ -61,6 +61,29 @@ async function persist(app, ctx, el, board) {
   });
 }
 
+// Double-click a text span to edit it inline; Enter/blur saves, Escape cancels.
+function makeEditable(span, save) {
+  span.ondblclick = () => {
+    const input = createEl("input", { type: "text", cls: "para-edit", value: span.textContent });
+    span.replaceWith(input);
+    input.focus();
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      const v = input.value.trim();
+      if (ok && v && v !== span.textContent) save(v);
+      else input.replaceWith(span);
+    };
+    input.onkeydown = (e) => {
+      if (e.isComposing) return;
+      if (e.key === "Enter") finish(true);
+      else if (e.key === "Escape") finish(false);
+    };
+    input.onblur = () => finish(true);
+  };
+}
+
 function renderBoard(app, ctx, el, board) {
   el.empty();
   el.addClass("para-board");
@@ -79,7 +102,8 @@ function renderBoard(app, ctx, el, board) {
       const header = card.createDiv({ cls: "para-card-header" });
 
       const toggle = header.createSpan({ cls: "para-card-toggle", text: "▶" });
-      header.createSpan({ cls: "para-card-text", text: task.text });
+      const text = header.createSpan({ cls: "para-card-text", text: task.text });
+      makeEditable(text, (v) => { task.text = v; commit(); });
 
       const acts = header.createSpan({ cls: "para-card-acts" });
       for (const target of CATEGORIES) {
@@ -95,7 +119,8 @@ function renderBoard(app, ctx, el, board) {
 
       for (let ci = 0; ci < task.children.length; ci++) {
         const row = detail.createDiv({ cls: "para-child" });
-        row.createSpan({ text: task.children[ci] });
+        const ctext = row.createSpan({ text: task.children[ci] });
+        makeEditable(ctext, (v) => { task.children[ci] = v; commit(); });
         const cdel = row.createEl("button", { text: "×", cls: "para-child-del", title: "削除" });
         cdel.onclick = () => { task.children.splice(ci, 1); commit(); };
       }
